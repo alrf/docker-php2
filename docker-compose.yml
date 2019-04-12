@@ -1,0 +1,49 @@
+version: '3'
+services:
+  deploy:
+    container_name: deploy
+    build:
+      context: ./services/php
+    restart: always
+    volumes:
+      - ./data/symfony:/var/www/symfony
+    command: /entrypoint.sh
+    networks:
+      - webapp
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: mysql://symfony:symfony@db:3306/symfony
+  dev-app:
+    container_name: dev-app
+    build:
+      context: ./services/php
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./data/symfony:/var/www/symfony
+    command: ["php", "-S", "0.0.0.0:8000", "-t", "/var/www/symfony/public"]
+    environment:
+      DATABASE_URL: mysql://symfony:symfony@db:3306/symfony
+    networks:
+      - webapp
+  db:
+    container_name: mysql
+    image: mysql:8.0
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-authentication-plugin=mysql_native_password']
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: symfony
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: symfony
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - webapp
+networks:
+  webapp:
